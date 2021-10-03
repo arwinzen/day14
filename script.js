@@ -1,17 +1,24 @@
 const openWeatherAPI = 'fc97c5a0c0302cc7c945bc04b4eeed5a';
 const locationIQAPI = 'pk.f1d6c97eba37cafc6ae4199f9dba436d';
 
-const currentDisplay = document.querySelector('.current-display'),
+const searchCity = document.querySelector('form'),
+      currentDisplay = document.querySelector('.current-display'),
       currentCity = document.querySelector('.current-city'),
       currentDesc = document.querySelector('.current-desc'),
       currentTemp = document.querySelector('.current-temp'),
       currentCoords = document.querySelector('.minmax-temp'),
+      hourlyForecast = document.querySelector('.hourly-forecast'),
       sevenDayForecast = document.querySelector('.sevenday-forecast');
 
 let address;
 let weatherData;
 let coordinates = [];
-const K = -273.15;
+
+function convertCelsius(K){
+    return Math.round(Number(K) - 273.15);
+}
+
+// const K = -273.15;
 
 function convertTime(timestamp){
     let now = new Date(timestamp * 1000);
@@ -59,8 +66,6 @@ function weatherForecast(data){
     console.log(coordinates);
     console.log(data);
 
-    // let dateTime = moment().unix(data.current.dt).format('MMMM Do YYYY, h:mm:ss a');
-    // let dateTime = moment(data.current.dt).format('L');
     // console.log(dateTime);
     let timestamp = data.current.dt;
     // console.log(unix_timestamp);
@@ -69,16 +74,46 @@ function weatherForecast(data){
     datetime = convertTime(timestamp);
     console.log(datetime);
 
+    // function to retrieve icons
+    function getIcons(frequency, i){
+        // icon url
+        // console.log(frequency, i);
+        // console.log(data[frequency][i].weather[0].icon);
+        let iconCode = data[frequency][i].weather[0].icon;
+        // console.log(iconCode);
+        let iconURL = `http://openweathermap.org/img/w/${iconCode}.png`;
+        let icon = document.querySelector(`.${frequency}-icon${i}`);
+        icon.setAttribute("src", iconURL);
+        // console.log(icon);
+    }
+
+
     // current city 
     currentDisplay.innerHTML = 
     `
     <span id="current-city">${address.city}</span>
     <span id="current-desc">${data.current.weather[0].description}</span>
-    <span id="current-temp">${Math.round(Number(data.current.temp) + K)}&#176;</span>
+    <span id="current-temp">${convertCelsius((data.current.temp))}&#176;</span>
+    <span id="current-max-min">H:${convertCelsius(data.daily[0].temp.max)}&#176; L:${convertCelsius(data.daily[0].temp.min)}&#176;</span>
     `;
 
     // hourly forecast
-    // 
+    console.log("hourly forecast section");
+    for (let i = 1; i < 25; i++){
+        let hourlyTimestamp = data.hourly[i].dt;
+        datetime = convertTime(hourlyTimestamp);
+        // console.log(datetime);
+        hourlyForecast.innerHTML += 
+        `
+        <div class="hourly">
+            <span class="hourly-time">${datetime.time}</span>
+            <img class="hourly-icon${i}" alt="${data.hourly[i].weather[0].description}">
+            <span class="hourly-temp">${convertCelsius(data.hourly[i].temp)}&#176;</span>
+        </div>
+        `;
+        frequency = "hourly";
+        getIcons(frequency, i);
+    }
 
     // daily forecast
     console.log("daily forecast section");
@@ -86,23 +121,19 @@ function weatherForecast(data){
         let dailyTimestamp = data.daily[i].dt;
         // console.log(convertTime(dailyTimestamp));
         datetime = convertTime(dailyTimestamp);
-        console.log(datetime);
+        // console.log(datetime);
         sevenDayForecast.innerHTML += 
         `
         <div class="daily-forecast">
             <span class="daily-day">${datetime.day}</span>
-            <img class="icon${i}">
-            <span class="daily-max">max</span>
-            <span class="daily-min">min</span>
+            <img class="daily-icon${i}" alt="${data.daily[i].weather[0].description}">
+            <span class="daily-max">${convertCelsius(data.daily[i].temp.max)}&#176;</span>
+            <span class="daily-min">${convertCelsius(data.daily[i].temp.min)}&#176;</span>
         </div>
-        `
+        `;
 
-        // icon url
-        let iconCode = data.daily[i].weather[0].icon;
-        let iconURL = `http://openweathermap.org/img/w/${iconCode}.png`;
-        let icon = document.querySelector(`.icon${i}`);
-        // console.log(icon);
-        icon.setAttribute("src", iconURL);
+        let frequency = "daily";
+        getIcons(frequency, i);
 
     }
 
@@ -135,6 +166,24 @@ function callWeatherAPI(lat, lon){
             // console.log(data);
         })
 }
+
+function searchCity(city){
+    fetch(`https://us1.locationiq.com/v1/search.php?key=${locationIQAPI}&q=${city}&format=json`)
+    .then((res) => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+    })
+    .then((data) => {
+        address = data.address;
+        callWeatherAPI(lat, lon);
+        return;
+    })
+    .catch((err) => {
+        console.error(err);
+    });
+}
+
+
 
 // function currentAPI(pos){
 //     fetch(`https://api.openweathermap.org/data/2.5/lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}`)
