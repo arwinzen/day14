@@ -1,7 +1,8 @@
 const openWeatherAPI = 'fc97c5a0c0302cc7c945bc04b4eeed5a';
 const locationIQAPI = 'pk.f1d6c97eba37cafc6ae4199f9dba436d';
 
-const searchForm = document.querySelector('.city-search'),
+const weatherWrapper = document.querySelector('#weather-wrapper'),
+      searchForm = document.querySelector('.city-search'),
       currentDisplay = document.querySelector('.current-display'),
       currentCity = document.querySelector('.current-city'),
       currentDesc = document.querySelector('.current-desc'),
@@ -72,12 +73,8 @@ function weatherForecast(data){
 
 
     // console.log(dateTime);
-    // let timestamp = data.current.dt;
-    // console.log(unix_timestamp);
-    // let now = new Date(unix_timestamp * 1000);
-
-    // datetime = convertTime(timestamp);
-    // console.log(datetime);
+    let timestamp = data.current.dt;
+    datetime = convertTime(timestamp);
 
     // function to retrieve icons
     function getIcons(frequency, i){
@@ -112,7 +109,7 @@ function weatherForecast(data){
         `
         <div class="hourly">
             <span class="hourly-time">${datetime.time}</span>
-            <img class="hourly-icon${i}" alt="${data.hourly[i].weather[0].description}">
+            <img class="icon hourly-icon${i}" alt="${data.hourly[i].weather[0].description}">
             <span class="hourly-temp">${convertCelsius(data.hourly[i].temp)}&#176;</span>
         </div>
         `;
@@ -131,7 +128,7 @@ function weatherForecast(data){
         `
         <div class="daily-forecast">
             <span class="daily-day">${datetime.day}</span>
-            <img class="daily-icon${i}" alt="${data.daily[i].weather[0].description}">
+            <img class="icon daily-icon${i}" alt="${data.daily[i].weather[0].description}">
             <span class="daily-max">${convertCelsius(data.daily[i].temp.max)}&#176;</span>
             <span class="daily-min">${convertCelsius(data.daily[i].temp.min)}&#176;</span>
         </div>
@@ -150,26 +147,32 @@ function weatherForecast(data){
     <span class="sunrise">
         <p>SUNRISE</p>
         ${sunrise.time}
+        <hr>
     </span>
     <span class="sunset">
         <p>SUNSET</p>
         ${sunset.time}
+        <hr>
     </span>
     <span class="percent-rain">
         <p>CHANCE OF RAIN</p>
         ${Math.round(Number(data.daily[0].pop) * 100)}&#37;
+        <hr>
     </span>
     <span class="humidity">
         <p>HUMIDITY</p>
         ${data.daily[0].humidity}&#37;
+        <hr>
     </span>
     <span class="wind-speed">
         <p>WIND</p>
         ${Math.round(Number(data.daily[0].wind_speed) * 3.6)} km/hr
+        <hr>
     </span>
     <span class="feels-like">
         <p>FEELS LIKE</p>
         ${convertCelsius(data.daily[0].feels_like.day)}&#176;
+        <hr>
     </span>
     `;
 
@@ -234,12 +237,5 @@ function searchCity(e){
     });
 }
 
-
-// function currentAPI(pos){
-//     fetch(`https://api.openweathermap.org/data/2.5/lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}`)
-//         .then(res => res.json())
-//         .then(data => {
-//             console.log(data);
-//         });
-// }
+getCoordinates();
 
