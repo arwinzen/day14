@@ -18,7 +18,7 @@ body {
     width: 100vw;
     display: grid;
     background-color: #141E30; 
-    grid-template-rows: 0.5fr 4fr 2.5fr 3fr 1fr 2fr;
+    grid-template-rows: 0.2fr 2.5fr 1.5fr 2.5fr 1.8fr;
     /* overflow: hidden; */
     
 }
@@ -73,6 +73,7 @@ form {
 .current-details {
     display: grid;
     width: 100vw;
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     grid-template-columns: 1fr 1fr;
+    background-color: lightgray;
 }

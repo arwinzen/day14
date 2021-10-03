@@ -1,16 +1,18 @@
 const openWeatherAPI = 'fc97c5a0c0302cc7c945bc04b4eeed5a';
 const locationIQAPI = 'pk.f1d6c97eba37cafc6ae4199f9dba436d';
 
-const searchCity = document.querySelector('form'),
+const searchForm = document.querySelector('.city-search'),
       currentDisplay = document.querySelector('.current-display'),
       currentCity = document.querySelector('.current-city'),
       currentDesc = document.querySelector('.current-desc'),
       currentTemp = document.querySelector('.current-temp'),
       currentCoords = document.querySelector('.minmax-temp'),
       hourlyForecast = document.querySelector('.hourly-forecast'),
-      sevenDayForecast = document.querySelector('.sevenday-forecast');
+      sevenDayForecast = document.querySelector('.sevenday-forecast'),
+      currentDetails = document.querySelector('.current-details');
 
-let address;
+let cityName;
+// let city;
 let weatherData;
 let coordinates = [];
 
@@ -18,7 +20,7 @@ function convertCelsius(K){
     return Math.round(Number(K) - 273.15);
 }
 
-// const K = -273.15;
+searchForm.addEventListener('submit', searchCity);
 
 function convertTime(timestamp){
     let now = new Date(timestamp * 1000);
@@ -62,17 +64,20 @@ function getCoordinates(){
 }
 
 function weatherForecast(data){
-    console.log(address);
+    // console.log(address);
     console.log(coordinates);
     console.log(data);
+    hourlyForecast.innerHTML = "";
+    sevenDayForecast.innerHTML ="";
+
 
     // console.log(dateTime);
-    let timestamp = data.current.dt;
+    // let timestamp = data.current.dt;
     // console.log(unix_timestamp);
     // let now = new Date(unix_timestamp * 1000);
 
-    datetime = convertTime(timestamp);
-    console.log(datetime);
+    // datetime = convertTime(timestamp);
+    // console.log(datetime);
 
     // function to retrieve icons
     function getIcons(frequency, i){
@@ -91,7 +96,7 @@ function weatherForecast(data){
     // current city 
     currentDisplay.innerHTML = 
     `
-    <span id="current-city">${address.city}</span>
+    <span id="current-city">${cityName}</span>
     <span id="current-desc">${data.current.weather[0].description}</span>
     <span id="current-temp">${convertCelsius((data.current.temp))}&#176;</span>
     <span id="current-max-min">H:${convertCelsius(data.daily[0].temp.max)}&#176; L:${convertCelsius(data.daily[0].temp.min)}&#176;</span>
@@ -101,7 +106,7 @@ function weatherForecast(data){
     console.log("hourly forecast section");
     for (let i = 1; i < 25; i++){
         let hourlyTimestamp = data.hourly[i].dt;
-        datetime = convertTime(hourlyTimestamp);
+        let datetime = convertTime(hourlyTimestamp);
         // console.log(datetime);
         hourlyForecast.innerHTML += 
         `
@@ -120,7 +125,7 @@ function weatherForecast(data){
     for (let i = 1; i < 8; i++){
         let dailyTimestamp = data.daily[i].dt;
         // console.log(convertTime(dailyTimestamp));
-        datetime = convertTime(dailyTimestamp);
+        let datetime = convertTime(dailyTimestamp);
         // console.log(datetime);
         sevenDayForecast.innerHTML += 
         `
@@ -137,6 +142,37 @@ function weatherForecast(data){
 
     }
 
+    // daily details 
+    let sunrise = convertTime(data.current.sunrise);
+    let sunset = convertTime(data.current.sunset);
+    currentDetails.innerHTML = 
+    `
+    <span class="sunrise">
+        <p>SUNRISE</p>
+        ${sunrise.time}
+    </span>
+    <span class="sunset">
+        <p>SUNSET</p>
+        ${sunset.time}
+    </span>
+    <span class="percent-rain">
+        <p>CHANCE OF RAIN</p>
+        ${Math.round(Number(data.daily[0].pop) * 100)}&#37;
+    </span>
+    <span class="humidity">
+        <p>HUMIDITY</p>
+        ${data.daily[0].humidity}&#37;
+    </span>
+    <span class="wind-speed">
+        <p>WIND</p>
+        ${Math.round(Number(data.daily[0].wind_speed) * 3.6)} km/hr
+    </span>
+    <span class="feels-like">
+        <p>FEELS LIKE</p>
+        ${convertCelsius(data.daily[0].feels_like.day)}&#176;
+    </span>
+    `;
+
 }
 
 function getCity(lat, lon){
@@ -148,7 +184,7 @@ function getCity(lat, lon){
             return res.json();
         })
         .then((data) => {
-            address = data.address;
+            cityName = data.address.city;
             callWeatherAPI(lat, lon);
             return;
         })
@@ -167,22 +203,36 @@ function callWeatherAPI(lat, lon){
         })
 }
 
-function searchCity(city){
-    fetch(`https://us1.locationiq.com/v1/search.php?key=${locationIQAPI}&q=${city}&format=json`)
-    .then((res) => {
+function searchCity(e){
+    // prevent page from refreshing
+    e.preventDefault();
+    let q = document.querySelector('.keyword').value.trim();
+    if (!q) return false;
+
+    fetch(`https://us1.locationiq.com/v1/search.php?key=${locationIQAPI}&q=${q}&format=json`)
+    .then(res => {
         if (!res.ok) throw new Error(res.statusText);
         return res.json();
     })
-    .then((data) => {
-        address = data.address;
-        callWeatherAPI(lat, lon);
+    .then(data => {
+        // console.log(data);
+        
+        let city = data[0];
+
+        const searchTerm = ',';
+        const indexOfFirst = city.display_name.indexOf(searchTerm);
+        console.log(`the index of "," in city name is ${indexOfFirst}`);
+        cityName = city.display_name.substring(0, indexOfFirst);
+        // console.log(cityName);
+
+        console.log(city);
+        callWeatherAPI(city.lat, city.lon);
         return;
     })
-    .catch((err) => {
+    .catch(err => {
         console.error(err);
     });
 }
-
 
 
 // function currentAPI(pos){
