@@ -2,15 +2,35 @@ const openWeatherAPI = 'fc97c5a0c0302cc7c945bc04b4eeed5a';
 const locationIQAPI = 'pk.f1d6c97eba37cafc6ae4199f9dba436d';
 
 const currentDisplay = document.querySelector('.current-display'),
-      currentCity = document.querySelector('current-city'),
-      currentDesc = document.querySelector('current-desc'),
-      currentTemp = document.querySelector('current-temp'),
-      currentCoords = document.querySelector('minmax-temp');
+      currentCity = document.querySelector('.current-city'),
+      currentDesc = document.querySelector('.current-desc'),
+      currentTemp = document.querySelector('.current-temp'),
+      currentCoords = document.querySelector('.minmax-temp'),
+      sevenDayForecast = document.querySelector('.sevenday-forecast');
 
 let address;
 let weatherData;
 let coordinates = [];
 const K = -273.15;
+
+function convertTime(timestamp){
+    let now = new Date(timestamp * 1000);
+    let dd = String(now.getDate()).padStart(2, '0');
+    let mm = String(now.getMonth() + 1).padStart(2, '0'); //January is 0!
+    let yyyy = now.getFullYear();
+
+    let datetime = {};
+    let date = dd + '/' + mm + '/' + yyyy;
+    datetime["date"] = date;
+    let time = now.toTimeString().substring(0,5);
+    datetime["time"] = time;
+
+    let days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    let day = days[now.getDay()];
+    datetime["day"] = day;
+
+    return datetime;
+}
 
 function getCoordinates(){
     let options = {
@@ -42,16 +62,12 @@ function weatherForecast(data){
     // let dateTime = moment().unix(data.current.dt).format('MMMM Do YYYY, h:mm:ss a');
     // let dateTime = moment(data.current.dt).format('L');
     // console.log(dateTime);
-    let unix_timestamp = data.current.dt;
-    console.log(unix_timestamp);
-    let date = new Date(unix_timestamp * 1000);
-    let time = date.toTimeString().substring(0,5);
-    // let hours = date.getHours();
-    // let mins = "0" + date.getMinutes();
-    // let secs = "0" + date.getSeconds();
+    let timestamp = data.current.dt;
+    // console.log(unix_timestamp);
+    // let now = new Date(unix_timestamp * 1000);
 
-    // var formattedTime = hours + ':' + mins.substr(-2) + ':' + secs.substr(-2);
-    console.log(time);
+    datetime = convertTime(timestamp);
+    console.log(datetime);
 
     // current city 
     currentDisplay.innerHTML = 
@@ -62,7 +78,33 @@ function weatherForecast(data){
     `;
 
     // hourly forecast
-    // for (let i = 0; i < 24; )
+    // 
+
+    // daily forecast
+    console.log("daily forecast section");
+    for (let i = 1; i < 8; i++){
+        let dailyTimestamp = data.daily[i].dt;
+        // console.log(convertTime(dailyTimestamp));
+        datetime = convertTime(dailyTimestamp);
+        console.log(datetime);
+        sevenDayForecast.innerHTML += 
+        `
+        <div class="daily-forecast">
+            <span class="daily-day">${datetime.day}</span>
+            <img class="icon${i}">
+            <span class="daily-max">max</span>
+            <span class="daily-min">min</span>
+        </div>
+        `
+
+        // icon url
+        let iconCode = data.daily[i].weather[0].icon;
+        let iconURL = `http://openweathermap.org/img/w/${iconCode}.png`;
+        let icon = document.querySelector(`.icon${i}`);
+        // console.log(icon);
+        icon.setAttribute("src", iconURL);
+
+    }
 
 }
 
